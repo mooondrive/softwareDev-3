@@ -198,5 +198,84 @@ function hideLoadingSpinner() {
   }
 
   showLoadingSpinner(); // Show loading spinner
+      try {
+        // Construct the prompt for the Gemini API
+        const prompt = `Recommend a balanced PC build for a budget of ${budget} BDT in ${location}. Provide the following components as a JSON object: CPU, GPU, RAM, Storage, and Power Supply (PSU). Also, include a 'notes' field for any important considerations or additional advice.`;
+
+        let chatHistory = [];
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+        // Define the JSON schema for the expected response
+        const responseSchema = {
+          type: "OBJECT",
+          properties: {
+            "cpu": { "type": "STRING" },
+            "gpu": { "type": "STRING" },
+            "ram": { "type": "STRING" },
+            "storage": { "type": "STRING" },
+            "psu": { "type": "STRING" },
+            "notes": { "type": "STRING" }
+          },
+          required: ["cpu", "gpu", "ram", "storage", "psu"]
+        };
+
+        const payload = {
+          contents: chatHistory,
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema
+          }
+        };
+
+        const apiKey = "AIzaSyDL4HMDuB_dG3VNVmd7jgxgmOhUAxhltDI"; // API key will be provided by the Canvas environment
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`API error: ${response.status} - ${errorData.error.message || response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // Check if the response structure is valid
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+
+          const jsonText = result.candidates[0].content.parts[0].text;
+          const buildRecommendation = JSON.parse(jsonText);
+
+          // Display the recommendation
+          resultsDiv.innerHTML = `
+            <h3>Recommended Build for ${budget} BDT in ${location}</h3>
+            <ul>
+              <li><strong>CPU:</strong> ${buildRecommendation.cpu || 'N/A'}</li>
+              <li><strong>GPU:</strong> ${buildRecommendation.gpu || 'N/A'}</li>
+              <li><strong>RAM:</strong> ${buildRecommendation.ram || 'N/A'}</li>
+              <li><strong>Storage:</strong> ${buildRecommendation.storage || 'N/A'}</li>
+              <li><strong>Power Supply:</strong> ${buildRecommendation.psu || 'N/A'}</li>
+            </ul>
+            ${buildRecommendation.notes ? `<p><strong>Notes:</strong> ${buildRecommendation.notes}</p>` : ''}
+          `;
+          resultsDiv.style.display = "block";
+
+        } else {
+          showMessage("Could not get a valid PC build recommendation. Please try again.", true);
+        }
+
+      } catch (error) {
+        console.error("Error fetching PC build recommendation:", error);
+        showMessage(`Failed to get recommendation: ${error.message}. Please try again.`, true);
+      } finally {
+        hideLoadingSpinner(); // Hide loading spinner regardless of success or failure
+      }
+    }
+  </script>
   </body>
 </html>
