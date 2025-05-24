@@ -151,5 +151,31 @@ button:hover {
       <div id="results"></div>
     </div>
   </div>
+  <script>
+  // Function to display messages (errors, info)
+function showMessage(message, isError = false) {
+  const messageBox = document.getElementById("messageBox");
+  messageBox.textContent = message;
+  messageBox.className = "message-box"; // Reset class
+  if (isError) {
+    messageBox.classList.add("error");
+  }
+  messageBox.style.display = "block";
+}
+
+// Function to hide messages
+function hideMessage() {
+  document.getElementById("messageBox").style.display = "none";
+}
+
+// Function to show loading spinner
+function showLoadingSpinner() {
+    document.getElementById("loadingSpinner").style.display = "block";
+}
+
+// Function to hide loading spinner
+function hideLoadingSpinner() {
+    document.getElementById("loadingSpinner").style.display = "none";
+}
   </body>
 </html>
